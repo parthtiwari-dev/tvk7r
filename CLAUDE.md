@@ -7,7 +7,9 @@ decisions only.
 
 ## Stack
 
-- Front end: React (Vite), in `web/` (not built yet)
+- Front end: React (Vite) + TypeScript + Observable Plot, in `web/`
+  - `api.ts` types and fetches, `format.ts` UK time and MW, `story.ts` screen helpers,
+    `components/` the screen. Run from `web/`: `npm test`, `npm run dev` (forwards `/api` to 8000)
 - Back end: Python, FastAPI, pandas, in `api/`
   - `engine/` pure logic (no web code, no file reading), `app.py` the endpoints,
     `snapshot.py` reads `data/`, `scripts/refresh_data.py` re-pulls the data, `tests/` pytest
