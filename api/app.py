@@ -6,8 +6,13 @@ MW and percentages are rounded to one decimal place.
 
 import math
 import re
+import sys
 from datetime import date, time, timedelta
 from functools import lru_cache
+from pathlib import Path
+
+# On Vercel this file is loaded from the repo root, not from api/, so make api/ importable.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException

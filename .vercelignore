@@ -1,0 +1,13 @@
+api/tests
+api/scripts
+api/Dockerfile
+api/.dockerignore
+web/node_modules
+web/dist
+web/Dockerfile
+web/nginx.conf
+docker-compose.yml
+.github
+docs
+**/__pycache__
+**/.pytest_cache
