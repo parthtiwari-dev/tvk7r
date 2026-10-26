@@ -148,7 +148,9 @@ flowchart LR
 
 On Vercel, from GitHub: every push to `main` deploys. The React app is served as static files;
 `api/app.py` runs as one Python function with the CSV snapshot bundled in (about 51 MB).
-COLD_START_PLACEHOLDER
+Measured on 2026-10-27 from India (the function runs in Washington, `iad1`): the very first
+request to a brand-new deployment (a cold start: Python, pandas and the CSVs load) took about
+1.1 s. Later requests took 0.4 to 0.8 s, including after 20 minutes with no traffic.
 
 ## AI tools used
 
