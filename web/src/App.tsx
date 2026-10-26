@@ -3,17 +3,17 @@ import { fetchAccuracy, fetchDay, fetchDays } from './api'
 import { DayStrip, Segmented } from './components/Controls'
 import { DayView } from './components/DayView'
 import { JanuaryReview } from './components/JanuaryReview'
+import { sureLabel } from './format'
 import { leadRange } from './story'
 
+// The two day-ahead auctions and when they close, UK time.
 const CUTOFFS = [
-  { value: '09:20', text: '09:20 EPEX' },
-  { value: '09:50', text: '09:50 N2EX' },
+  { value: '09:20', text: '09:20 · EPEX' },
+  { value: '09:50', text: '09:50 · N2EX' },
 ]
-const RISKS = [
-  { value: '1 in 5', text: '1 in 5' },
-  { value: '1 in 10', text: '1 in 10' },
-  { value: '1 in 20', text: '1 in 20' },
-]
+// How sure you want to be that wind comes in above what you count on. The values are the API's
+// risk levels ("1 in 10" = wind may fall below in 1 hour in 10); the screen says it the positive way.
+const RISKS = ['1 in 5', '1 in 10', '1 in 20'].map((value) => ({ value, text: sureLabel(value) }))
 
 /** Loads data for the current inputs. Ignores answers that arrive after the inputs changed. */
 function useLoad<T>(load: () => Promise<T>, deps: unknown[]) {
@@ -49,13 +49,18 @@ export default function App() {
   return (
     <div className="app">
       <header className="top">
-        <div className="brand">Wind cover <small>UK national wind · day-ahead · January 2026</small></div>
+        <div className="brand">Day-ahead wind <small>UK national wind · January 2026</small></div>
         <div className="controls">
-          <Segmented label="Cutoff" options={CUTOFFS} value={cutoff} onChange={setCutoff} />
-          <Segmented label="Risk" options={RISKS} value={risk} onChange={setRisk} />
+          <Segmented label="Auction closes" options={CUTOFFS} value={cutoff} onChange={setCutoff} />
+          <Segmented label="How sure" options={RISKS} value={risk} onChange={setRisk} />
         </div>
       </header>
-      {days.data && <DayStrip days={days.data.days} value={deliveryDay} onChange={setDeliveryDay} />}
+      <p className="intro">
+        For each January morning: the wind forecast you had when the auction closed, how far off forecasts like it
+        have been, and how much of it you could count on.
+      </p>
+      {days.data && <DayStrip days={days.data.days} value={deliveryDay} risk={risk} onChange={setDeliveryDay} />}
+      {days.data && <p className="strip-key"><i className="key-bar" /> each day's average miss <i className="key-bar fell" /> wind fell below what you counted on</p>}
 
       <main>
         {error && <p className="error">Could not load the data: {error}</p>}

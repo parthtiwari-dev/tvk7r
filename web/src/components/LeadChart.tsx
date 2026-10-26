@@ -10,7 +10,7 @@ const THIN_BAND = 1400
 const TOO_THIN = 100
 
 /**
- * Typical miss by how far ahead the forecast was made, from every publish in January.
+ * Average miss by how far ahead the forecast was made, from every publish in January.
  * The shaded strip is where the forecasts you had at the cutoff sit.
  */
 export function LeadChart({ bands, decisionLeads, cutoff }: { bands: LeadBand[]; decisionLeads: [number, number] | null; cutoff: string }) {
@@ -18,7 +18,7 @@ export function LeadChart({ bands, decisionLeads, cutoff }: { bands: LeadBand[];
   const dropped = bands.filter((b) => b.forecasts < TOO_THIN)
   return (
     <figure className="panel">
-      <figcaption className="panel-title">Typical miss by how far ahead the forecast was made</figcaption>
+      <figcaption className="panel-title">Average miss by how far ahead the forecast was made</figcaption>
       <PlotFigure deps={[bands, decisionLeads]} make={(width) => chart(shown, decisionLeads, cutoff, width)} />
       <p className="note">
         From every forecast published in January, not only the one you had. Faded bars are built from fewer forecasts.
@@ -37,7 +37,7 @@ function chart(bands: LeadBand[], leads: [number, number] | null, cutoff: string
     marginLeft: 52,
     style: plotStyle,
     x: { label: 'Hours ahead →', domain: [0, right], ticks: bands.map((b) => b.from_hours).filter((h) => h % 12 === 0) },
-    y: { label: 'Typical miss, MW', domain: [0, top], grid: true, tickFormat: (d: number) => mw(d) },
+    y: { label: 'Average miss, MW', domain: [0, top], grid: true, tickFormat: (d: number) => mw(d) },
     marks: [
       leads ? Plot.rectX([leads], { x1: (l) => l[0], x2: (l) => l[1], y1: 0, y2: top, fill: colors.accent, fillOpacity: 0.08 }) : null,
       leads ? Plot.text([leads], { x: (l) => (l[0] + l[1]) / 2, y: top, dy: 10, text: () => `your ${cutoff} decision`, fill: colors.accent, fontWeight: 600 }) : null,
@@ -50,7 +50,7 @@ function chart(bands: LeadBand[], leads: [number, number] | null, cutoff: string
       }),
       Plot.tip(bands, Plot.pointerX({
         x: (b: LeadBand) => (b.from_hours + b.to_hours) / 2, y: 'typical_miss_mw', fill: colors.panel, stroke: colors.line,
-        title: (b: LeadBand) => `${b.from_hours}-${b.to_hours} h ahead\nTypical miss ${mw(b.typical_miss_mw)} MW\nBias +${mw(b.bias_mw)} MW\n${mw(b.forecasts)} forecasts`,
+        title: (b: LeadBand) => `${b.from_hours}-${b.to_hours} h ahead\nAverage miss ${mw(b.typical_miss_mw)} MW\nForecast ran ${b.bias_mw < 0 ? 'low' : 'high'} by ${mw(Math.abs(b.bias_mw))} MW\n${mw(b.forecasts)} forecasts`,
       })),
     ],
   })

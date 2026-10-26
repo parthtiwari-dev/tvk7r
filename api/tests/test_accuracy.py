@@ -32,6 +32,11 @@ def test_cover_counts_all_of_it_as_unneeded_when_wind_beats_the_forecast():
     assert c["unneeded_cover_mw"] == pytest.approx(250)  # the -500 hour wasted all 1000
 
 
+def test_hours_beyond_counts_only_shortfalls_bigger_than_the_cover():
+    errors = pd.Series([5000, 4559, -6000, None, 4560])  # equal to the cover is not beyond it
+    assert accuracy.hours_beyond(errors, 4559) == 2
+
+
 def test_cover_is_never_negative():
     c = accuracy.cover(pd.Series([-100, -200, -300]), 0.9)
     assert c["cover_mw"] == 0

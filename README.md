@@ -18,14 +18,17 @@ day in the pilot, the app shows:
 1. **The forecast you had.** For each hour of the delivery day, the newest Elexon wind forecast
    published **strictly before** the auction cutoff (09:20 UK for EPEX, or 09:50 for N2EX).
    Nothing published later is ever used.
-2. **How much forecasts like it missed.** Typical miss, bias (does it run high or low), and
-   **cover**: the MW to hold back so that wind comes in short by more than that only 1 hour in
-   5, 10 or 20. The top of the screen uses only delivery days already over that morning; the
-   "January in review" section below uses the whole month and says so.
-3. **How it turned out.** Forecast against actual, half-hour by half-hour, with the shortfall
-   shaded and a dashed "forecast minus cover" line.
+2. **How much of it you can count on.** The forecast minus a safety margin, sized from how far
+   past forecasts fell short: you choose how sure you want to be (4 in 5, 9 in 10 or 19 in 20
+   hours). Next to it, the average miss and how far the forecast has run high. The top of the
+   screen uses only delivery days already finished that morning; the "January in review"
+   section below uses the whole month and says so.
+3. **How it turned out.** Forecast against actual, half-hour by half-hour, with the gap shaded
+   and a dashed "wind you can count on" line. A small bar per day shows each day's miss and
+   marks the days wind fell below what you counted on.
 
-It does not say how much power to buy: demand is outside the data in scope.
+It does not say how much power to buy: demand is outside the data in scope. The team buys the
+rest of their demand beyond the wind they can count on.
 
 ## How to run
 
@@ -43,14 +46,14 @@ React app on nginx, which also forwards `/api` to the API, the same way Vercel d
 ```
 cd api                                 # Python 3.13
 pip install -r requirements-dev.txt
-python -m pytest                       # 42 tests
+python -m pytest                       # 44 tests
 uvicorn app:app --reload               # API on http://127.0.0.1:8000 (docs at /docs)
 ```
 
 ```
 cd web                                 # Node 20.19+ or 22.12+
 npm install
-npm test                               # 15 tests
+npm test                               # 16 tests
 npm run dev                            # app on http://localhost:5173 (forwards /api to port 8000)
 ```
 
@@ -99,18 +102,18 @@ flowchart LR
   09:20 is too late. If the newest publish skipped an hour, that hour falls back to the one
   before; if nothing was published before the cutoff, the hour stays empty. Tests cover each case.
 - **Error = forecast minus actual.** Positive means wind came in below forecast, so you are
-  short. Cover is sized from the short side only (the 80th, 90th or 95th percentile of the
-  error).
+  short. The safety margin (called `cover` in the code) is sized from the short side only: the
+  80th, 90th or 95th percentile of the error. Wind you can count on = forecast minus the margin.
 - **Two honest views.** "That morning" numbers use only delivery days fully over before the
   decision; a test checks a later day never leaks in. On Fri 2 Jan there is no past day, so the
-  app shows no cover number rather than inventing one.
+  app says there is no track record yet rather than inventing a number.
 - **Endpoints:** `/api/health`, `/api/days`, `/api/day/{YYYY-MM-DD}?cutoff=HH:MM`,
   `/api/accuracy?cutoff=HH:MM`. Times out in UTC; the front end shows UK time.
 - **Computed on request** (then cached per cutoff), so the cutoff control works without
   pre-computing every combination.
 - The front end computes no metrics: every number comes from the engine, so two places can't
-  disagree. It only formats them and, for the day shown, counts the hours short by more than the
-  cover.
+  disagree. It only formats them and subtracts the margin from the forecast to draw "wind you
+  can count on".
 
 ## Data notes
 
@@ -131,12 +134,12 @@ flowchart LR
 
 ## Tests and CI
 
-- `api/`: 42 pytest tests. Edge cases on small hand-made tables (nothing before the cutoff, a
+- `api/`: 44 pytest tests. Edge cases on small hand-made tables (nothing before the cutoff, a
   publish exactly at and just after the cutoff, a skipped hour, duplicates, past-hour rows,
   summer time and clock-change days, a missing half-hour, the past-days rule, each metric
   against numbers worked by hand), plus a cross-check against numbers worked out separately on
   the real snapshot.
-- `web/`: 15 Vitest tests for UK time, number formats, the headline sentence and chart rows.
+- `web/`: 16 Vitest tests for UK time, number formats, the headline, "count on" and chart rows.
 - GitHub Actions runs on every push and pull request: pytest; lint, tests and build for the web
   app; and a Docker job that builds both containers, starts them and checks the API, a day and
   the page answer through nginx.
@@ -150,8 +153,9 @@ COLD_START_PLACEHOLDER
 ## AI tools used
 
 Built with **Claude Code** (Anthropic's AI coding tool), which wrote most of the code. The
-decisions were mine: what "the forecast you had" means and where the cutoff sits, sizing cover
-from the short side, keeping "that morning" and "January in review" apart, how the screen looks.
+decisions were mine: what "the forecast you had" means and where the cutoff sits, sizing the
+safety margin from the short side, keeping "that morning" and "January in review" apart, saying
+it in the client's words ("wind you can count on"), how the screen looks.
 `CLAUDE.md` holds the rules the tool worked under. The engine's numbers were checked against
 figures worked out separately before any code was written.
 
@@ -159,5 +163,5 @@ figures worked out separately before any code was written.
 
 - January 2026 only, from a snapshot. The refresh script can re-pull it; other months would need
   the date window in `app.py` widened.
-- No demand data, so the app gives wind and cover, not a purchase volume.
+- No demand data, so the app gives the wind you can count on, not a purchase volume.
 - National wind only, as the brief scopes it.

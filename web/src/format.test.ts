@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { dateLabel, gw, mw, riskNumber, signedMw, ukDay, ukTime, weekday } from './format'
+import { dateLabel, gw, mw, riskNumber, signedMw, sureLabel, ukDay, ukTime, weekday } from './format'
 
 describe('UK time', () => {
   test('in winter UK time is UTC', () => {
@@ -34,5 +34,11 @@ describe('numbers', () => {
 
   test('risk level as a number', () => {
     expect(riskNumber('1 in 10')).toBe(10)
+  })
+
+  test('risk level said the positive way round', () => {
+    expect(sureLabel('1 in 5')).toBe('4 in 5 hours')
+    expect(sureLabel('1 in 10')).toBe('9 in 10 hours')
+    expect(sureLabel('1 in 20')).toBe('19 in 20 hours')
   })
 })

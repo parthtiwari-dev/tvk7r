@@ -24,6 +24,7 @@ export type DaySummary = DayLabels & Summary & {
   avg_forecast_mw: number | null
   avg_actual_mw: number | null
   worst_short_mw: number | null
+  hours_beyond_cover: Record<string, number> // per risk level, against that morning's cover; {} with no history
 }
 
 export type Hour = {

@@ -29,3 +29,6 @@ export const signedMw = (value: number) => (value > 0 ? '+' : value < 0 ? '−' 
 
 /** "1 in 10" -> 10 */
 export const riskNumber = (risk: string) => Number(risk.split(' in ')[1])
+
+/** The risk level said the positive way round, as the screen shows it: "1 in 10" -> "9 in 10 hours" */
+export const sureLabel = (risk: string) => `${riskNumber(risk) - 1} in ${riskNumber(risk)} hours`

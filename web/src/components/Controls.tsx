@@ -1,5 +1,9 @@
 import { useEffect, useRef } from 'react'
 import type { DaySummary } from '../api'
+import { mw } from '../format'
+
+/** Height of the tallest day bar (the day with the biggest average miss). */
+const BAR_PX = 24
 
 /** A row of buttons where exactly one is chosen. */
 export function Segmented<T extends string>({ label, options, value, onChange }: {
@@ -22,9 +26,13 @@ export function Segmented<T extends string>({ label, options, value, onChange }:
   )
 }
 
-/** The 31 delivery days in a row, with arrows to step one day back or forward. */
-export function DayStrip({ days, value, onChange }: { days: DaySummary[]; value: string; onChange: (day: string) => void }) {
+/**
+ * The 31 delivery days in a row, with arrows to step one day back or forward. Each day has a
+ * small bar for its average miss, in the accent colour when wind fell below what you counted on.
+ */
+export function DayStrip({ days, value, risk, onChange }: { days: DaySummary[]; value: string; risk: string; onChange: (day: string) => void }) {
   const index = days.findIndex((d) => d.delivery_day === value)
+  const biggestMiss = Math.max(...days.map((d) => d.typical_miss_mw ?? 0), 1)
   const row = useRef<HTMLDivElement>(null)
 
   // On a narrow screen the row scrolls sideways: keep the chosen day in the middle of it.
@@ -45,8 +53,11 @@ export function DayStrip({ days, value, onChange }: { days: DaySummary[]; value:
       <div className="days" ref={row}>
         {days.map((d) => {
           const [, month, dayOfMonth] = d.delivery_day.split('-')
+          const beyond = d.hours_beyond_cover[risk]
+          const classes = ['day', d.delivery_day === value && 'on', beyond > 0 && 'fell'].filter(Boolean).join(' ')
           return (
-            <button key={d.delivery_day} title={d.label} className={d.delivery_day === value ? 'day on' : 'day'} onClick={() => onChange(d.delivery_day)}>
+            <button key={d.delivery_day} title={dayTitle(d, beyond)} className={classes} onClick={() => onChange(d.delivery_day)}>
+              <span className="bar" style={{ height: `${Math.max(2, (BAR_PX * (d.typical_miss_mw ?? 0)) / biggestMiss)}px` }} />
               {Number(dayOfMonth)}{month === '02' && <small>Feb</small>}
             </button>
           )
@@ -55,4 +66,12 @@ export function DayStrip({ days, value, onChange }: { days: DaySummary[]; value:
       <button className="arrow" onClick={() => step(1)} disabled={index >= days.length - 1} aria-label="Next day">›</button>
     </nav>
   )
+}
+
+function dayTitle(d: DaySummary, beyond: number | undefined) {
+  const miss = d.typical_miss_mw !== null ? `, average miss ${mw(d.typical_miss_mw)} MW` : ''
+  const result = beyond === undefined
+    ? 'no track record yet that morning'
+    : beyond === 0 ? 'wind stayed above what you counted on' : `wind fell below what you counted on in ${beyond} of ${d.hours} hours`
+  return `${d.label}${miss}; ${result}`
 }

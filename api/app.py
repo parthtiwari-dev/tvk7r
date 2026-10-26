@@ -111,17 +111,23 @@ def health():
 
 @app.get("/api/days")
 def days(cutoff: str = DEFAULT_CUTOFF):
-    """The 31 delivery days, each labelled both ways, with a one-line summary."""
+    """The 31 delivery days, each labelled both ways, with a one-line summary.
+
+    hours_beyond_cover: for each risk level, how many hours that day came in short by more than
+    the cover known on the decision morning. Empty when no day had finished by then.
+    """
     table = decision_table(parse_cutoff(cutoff))
     result = []
     for day, rows in table.groupby("delivery_day"):
         errors = rows["error_mw"]
+        morning = accuracy.that_morning(table, day - timedelta(days=1))
         result.append({
             **describe_day(day),
             "avg_forecast_mw": rows["forecast_mw"].mean(),
             "avg_actual_mw": rows["actual_mw"].mean(),
             **accuracy.summary(errors),
             "worst_short_mw": errors.max(),
+            "hours_beyond_cover": {c["risk"]: accuracy.hours_beyond(errors, c["cover_mw"]) for c in morning["cover"]},
         })
     return to_json({"cutoff": cutoff, "days": result})
 

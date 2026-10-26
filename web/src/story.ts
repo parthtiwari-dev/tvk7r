@@ -23,16 +23,19 @@ export function headline(morning: ThatMorning, risk: string): Headline {
   }
 }
 
-/** Hours where wind came in short by more than the cover: the hours the cover would not have saved. */
-export function hoursBeyondCover(hours: Hour[], coverMw: number) {
-  return hours.filter((h) => h.error_mw !== null && h.error_mw > coverMw).length
+/**
+ * Wind you can count on: the forecast minus the cover (the screen calls the cover a safety
+ * margin). The day's average forecast minus the margin, since the margin is the same every hour.
+ */
+export function countOn(avgForecastMw: number | null | undefined, coverMw: number | null) {
+  return avgForecastMw == null || coverMw === null ? null : avgForecastMw - coverMw
 }
 
 export type ChartRow = {
   time: Date
   forecast: number
   actual: number
-  floor: number | null // forecast minus cover; null when there is no cover number yet
+  countOn: number | null // forecast minus cover; null when there is no cover number yet
   hour: Hour
 }
 
@@ -52,7 +55,7 @@ export function chartRows(day: Pick<DayDetail, 'hours' | 'half_hourly_actuals'>,
       time: new Date(t),
       forecast: hour.forecast_mw,
       actual: half.actual_mw,
-      floor: coverMw === null ? null : hour.forecast_mw - coverMw,
+      countOn: coverMw === null ? null : hour.forecast_mw - coverMw,
       hour,
     })
   }

@@ -21,6 +21,13 @@ def test_days_lists_31_days_labelled_both_ways(client):
     assert days[13]["label"] == "Decide Wed 14 Jan, delivery Thu 15 Jan"
 
 
+def test_days_count_hours_beyond_that_mornings_cover(client):
+    days = {d["delivery_day"]: d for d in client.get("/api/days").json()["days"]}
+    assert days["2026-01-28"]["hours_beyond_cover"]["1 in 10"] == 24  # the day the cover failed
+    assert days["2026-01-15"]["hours_beyond_cover"]["1 in 10"] == 0
+    assert days["2026-01-02"]["hours_beyond_cover"] == {}  # no finished day that morning
+
+
 def test_one_day(client):
     d = client.get("/api/day/2026-01-15").json()
     assert d["cutoff_utc"] == "2026-01-14T09:20:00Z"

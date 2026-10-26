@@ -1,5 +1,5 @@
 import type { Accuracy } from '../api'
-import { mw, riskNumber, signedMw } from '../format'
+import { mw, sureLabel } from '../format'
 import { LeadChart } from './LeadChart'
 
 /** The bottom half: the whole month, as a report card. Uses days after each decision, so it is labelled as such. */
@@ -24,25 +24,25 @@ export function JanuaryReview({ accuracy, risk, decisionLeads, onPickDay }: {
         <div className="review-side">
           <div className="cards two">
             <div className="card">
-              <div className="card-label">Typical miss</div>
+              <div className="card-label">Average miss</div>
               <div className="card-value">{mw(accuracy.typical_miss_mw!)}<small>MW</small></div>
             </div>
             <div className="card">
-              <div className="card-label">Bias</div>
-              <div className="card-value">{signedMw(accuracy.bias_mw!)}<small>MW</small></div>
-              <div className="card-note">Short in {accuracy.short_hours} of {accuracy.hours} hours</div>
+              <div className="card-label">{accuracy.bias_mw! < 0 ? 'Forecast ran low by' : 'Forecast ran high by'}</div>
+              <div className="card-value">{mw(Math.abs(accuracy.bias_mw!))}<small>MW</small></div>
+              <div className="card-note">Wind came in below forecast in {accuracy.short_hours} of {accuracy.hours} hours</div>
             </div>
           </div>
 
-          <div className="card-label">Cover for the month, at each risk level</div>
+          <div className="card-label">Safety margin for the month, by how sure you want to be</div>
           <table className="cover-table">
             <thead>
-              <tr><th>Risk</th><th>Cover</th><th>Hours still short</th><th>Not needed, avg</th></tr>
+              <tr><th>How sure</th><th>Safety margin</th><th>Hours wind fell below</th><th>Margin not needed, avg</th></tr>
             </thead>
             <tbody>
               {accuracy.cover.map((c) => (
                 <tr key={c.risk} className={c.risk === risk ? 'on' : ''}>
-                  <td>1 hour in {riskNumber(c.risk)}</td>
+                  <td>{sureLabel(c.risk)}</td>
                   <td>{mw(c.cover_mw)} MW</td>
                   <td>{c.still_short_pct}%</td>
                   <td>{mw(c.unneeded_cover_mw)} MW</td>
@@ -54,7 +54,8 @@ export function JanuaryReview({ accuracy, risk, decisionLeads, onPickDay }: {
           <p className="note">
             Wind beat the forecast in {extra.hours} hours ({extra.pct_of_hours}%)
             {extra.typical_extra_mw !== null && <>, typically by {mw(extra.typical_extra_mw)} MW</>}.
-            Cover is sized from the short side only: being short is paid at the imbalance price.
+            The margin is sized only from hours when wind came in below forecast: being short is paid at
+            the imbalance price, while extra wind just means buying less.
           </p>
 
           <div className="worst">
@@ -63,7 +64,7 @@ export function JanuaryReview({ accuracy, risk, decisionLeads, onPickDay }: {
               {accuracy.worst_days.map((d) => (
                 <li key={d.delivery_day}>
                   <button onClick={() => onPickDay(d.delivery_day)}>{d.label}</button>
-                  <span>{mw(d.typical_miss_mw)} MW typical miss</span>
+                  <span>{mw(d.typical_miss_mw)} MW average miss</span>
                 </li>
               ))}
             </ol>

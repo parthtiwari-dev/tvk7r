@@ -52,6 +52,11 @@ def cover_levels(errors):
     return [{"risk": name, **(cover(errors, level) or {})} for name, level in RISK_LEVELS.items()]
 
 
+def hours_beyond(errors, cover_mw):
+    """Hours short by more than the cover: wind came in below the forecast minus the cover."""
+    return int((known(errors) > cover_mw).sum())
+
+
 def extra_side(errors):
     """The other way round: hours where wind beat the forecast, and by how much typically."""
     e = known(errors)
