@@ -8,12 +8,18 @@ decisions only.
 ## Stack
 
 - Front end: React (Vite), in `web/` (not built yet)
-- Back end: Python, FastAPI, in `api/` (not built yet)
-- Docker for local runs, Vercel for deploy
+- Back end: Python, FastAPI, pandas, in `api/`
+  - `engine/` pure logic (no web code, no file reading), `app.py` the endpoints,
+    `snapshot.py` reads `data/`, `scripts/refresh_data.py` re-pulls the data, `tests/` pytest
+  - Run tests from `api/`: `python -m pytest`. Run the API: `uvicorn app:app --reload`
+- Docker for local runs, Vercel for deploy (not set up yet)
 
 ## Rules
 
-- No lookahead: a forecast counts for a decision only if its `publishTime` is before the cutoff.
+- No lookahead: a forecast counts for a decision only if its `publishTime` is strictly before the
+  cutoff. "What you'd have known that morning" numbers use only delivery days already over.
+- Error = forecast minus actual (positive = wind came in short). Cover is sized from the short
+  side.
 - The core selection and metrics logic is pure functions with tests.
 - Times are stored in UTC and shown in UK time.
 - The README must stay true: never describe a feature the code doesn't have.
